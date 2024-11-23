@@ -4,6 +4,7 @@ services:
       context: ./frontend
       dockerfile: Dockerfile
     container_name: frontend
+    image: thatsitag10/frontend:latest
     ports:
       - '8501:8501'
     depends_on:
@@ -18,6 +19,7 @@ services:
       context: ./convert
       dockerfile: Dockerfile
     container_name: convert
+    image: thatsitag10/convert:latest
     ports:
       - '8000:8000'
     networks:
@@ -28,6 +30,7 @@ services:
       context: ./protect
       dockerfile: Dockerfile
     container_name: password
+    image: thatsitag10/password:latest
     ports:
       - '8001:8001'
     networks:
@@ -38,6 +41,7 @@ services:
       context: ./merge
       dockerfile: Dockerfile
     container_name: merge
+    image: thatsitag10/merge:latest
     ports:
       - '8002:8002'
     networks:

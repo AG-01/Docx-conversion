@@ -1,0 +1,38 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: frontend
+spec:
+  replicas: 1 
+  selector:
+    matchLabels:
+      app: frontend
+  template:
+    metadata:
+      labels:
+        app: frontend
+    spec:
+      containers:
+      - name: frontend
+        image: gcr.io/linear-passkey-442607-k8/frontend:latest
+        ports:
+        - containerPort: 8501
+        resources:
+          requests:
+            memory: "128Mi"  
+            cpu: "200m"     
+          limits:
+            memory: "256Mi" 
+            cpu: "400m"      
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: frontend-service
+spec:
+  selector:
+    app: frontend
+  ports:
+  - port: 8501
+    targetPort: 8501
+  type: ClusterIP
