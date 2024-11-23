@@ -1,24 +1,28 @@
-import subprocess
+
+from PyPDF2 import PdfMerger
 from typing import List
 
-
-def merge_pdfs(inputPaths: List[str], outputPath: str):
+def merge_pdfs(input_paths: List[str], output_path: str):
     """
-    Merges multiple PDF files into one using pandoc.
+    Merges multiple PDF files into one using PyPDF2.
 
     Args:
         input_paths (List[str]): A list of paths to the PDF files to merge.
         output_path (str): The path to save the merged PDF file.
     """
-
     try:
-        # Construct the pandoc command
-        command = ["pandoc", inputPaths, "-o", outputPath]
-        # Execute the pandoc command
-        subprocess.run(command, check=True)
-
-    except subprocess.CalledProcessError as e:
-        raise Exception(f"Error merging PDFs using pandoc: {e}")
-
-    except FileNotFoundError:
-        raise Exception("Pandoc not found. Please make sure pandoc is installed and in your PATH.")
+        merger = PdfMerger()
+        
+        # Add each PDF to the merger
+        for pdf_path in input_paths:
+            merger.append(pdf_path)
+        
+        # Write the merged PDF to the output path
+        with open(output_path, 'wb') as output_file:
+            merger.write(output_file)
+            
+        # Close the merger to free up resources
+        merger.close()
+            
+    except Exception as e:
+        raise Exception(f"Error merging PDFs: {str(e)}")

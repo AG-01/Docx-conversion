@@ -1,65 +1,3 @@
-# import os
-# from uuid import uuid4
-# from fastapi import FastAPI, UploadFile, File, Form
-# from fastapi.responses import FileResponse, PlainTextResponse
-# from convert import *
-# from password import *
-
-
-# app = FastAPI()
-
-# DOCUMENTS = 'uploads'
-# PDFS = 'output'
-# os.makedirs(DOCUMENTS, exist_ok=True)
-# os.makedirs(PDFS, exist_ok=True)
-
-
-# @app.post("/convert")
-# async def upload_file(
-#     file: UploadFile = File(...),
-#     password: str = Form(None)
-# ):
-#     if not file.filename.endswith('.docx', '.doc'):
-#         return PlainTextResponse('Invalid file format.', status_code=400)
-
-#     # Generate unique filenames
-#     input_filename = f"{file.filename}"
-#     input_path = os.path.join(DOCUMENTS, input_filename)
-#     output_filename = os.path.splitext(input_filename)[0] + '.pdf'
-#     output_path = os.path.join(PDFS, output_filename)
-
-#     # Save the uploaded file
-#     with open(input_path, 'wb') as f:
-#         content = await file.read()
-#         f.write(content)
-
-#     try:
-#         # Convert Word to PDF
-#         print(f"Converting {input_path} to {output_path}")
-#         document_to_pdf(input_path, output_path)
-
-#         # Apply password protection if a password is provided
-#         if password:
-#             protected_output = os.path.join(PDFS, f"protected_{output_filename}")
-#             protect_pdf(output_path, protected_output, password)
-#             os.replace(protected_output, output_path)
-
-#         return FileResponse(
-#             path=output_path,
-#             media_type='application/pdf',
-#             filename=os.path.basename(output_path)
-#         )
-#     except Exception as e:
-#         print(f"Error: {e}")
-#         return PlainTextResponse(f'Error: {str(e)}', status_code=500)
-#     finally:
-#         # Clean up the input file and optionally the output file
-#         if os.path.exists(input_path):
-#             os.remove(input_path)
-#         # Optionally, clean up the output PDF after sending
-#         # if os.path.exists(output_path):
-#         #     os.remove(output_path)
-
 from fastapi import FastAPI, UploadFile, File, Form, HTTPException
 from fastapi.responses import FileResponse
 from typing import List
@@ -119,11 +57,7 @@ async def upload_file(
         # Clean up the uploaded file
         if os.path.exists(input_path):
             os.remove(input_path)
-        # Optionally, remove the output PDF after sending it
-        # if os.path.exists(output_path):
-        #     os.remove(output_path)
-
-# New '/bulk_convert' endpoint without using a bulk helper function
+        
 @app.post("/bulk_convert")
 async def bulk_convert(
     files: List[UploadFile] = File(...),
@@ -160,9 +94,7 @@ async def bulk_convert(
                 protected_output = os.path.join(OUTPUT_FOLDER, f"protected_{output_filename}")
                 protect_pdf(output_path, protected_output, password)
                 os.replace(protected_output, output_path)
-                output_paths.append(output_path)
-            else:
-                output_paths.append(output_path)
+            output_paths.append(output_path)
         
         if merge:
             # Merge PDFs into a single PDF
@@ -170,42 +102,55 @@ async def bulk_convert(
             merged_output_path = os.path.join(OUTPUT_FOLDER, merged_output_filename)
             merge_pdfs(output_paths, merged_output_path)
             
+            # Clean up individual PDFs after merging
+            for path in output_paths:
+                if os.path.exists(path):
+                    os.remove(path)
+            
             # Apply password protection to the merged PDF if password is provided
             if password:
                 protected_merged_output = os.path.join(OUTPUT_FOLDER, f"protected_{merged_output_filename}")
                 protect_pdf(merged_output_path, protected_merged_output, password)
                 os.replace(protected_merged_output, merged_output_path)
             
-            return FileResponse(
+            response = FileResponse(
                 path=merged_output_path,
                 media_type='application/pdf',
                 filename=os.path.basename(merged_output_path)
             )
         else:
-            # Return the individual PDFs as a ZIP file
+            # Create and return ZIP file
             zip_filename = f"converted_{uuid4()}.zip"
             zip_path = os.path.join(OUTPUT_FOLDER, zip_filename)
             with ZipFile(zip_path, 'w') as zipf:
                 for output_path in output_paths:
                     zipf.write(output_path, arcname=os.path.basename(output_path))
-            return FileResponse(
+            
+            # Clean up individual PDFs after creating ZIP
+            for path in output_paths:
+                if os.path.exists(path):
+                    os.remove(path)
+            
+            response = FileResponse(
                 path=zip_path,
                 media_type='application/zip',
                 filename=os.path.basename(zip_path)
             )
+        
+        # Clean up input files
+        for path in input_paths:
+            if os.path.exists(path):
+                os.remove(path)
+        
+        return response
+        
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error during bulk conversion: {str(e)}")
-    finally:
-        # Clean up the uploaded and output files
+        # Clean up any remaining files in case of error
         for path in input_paths + output_paths:
             if os.path.exists(path):
                 os.remove(path)
-        # Clean up merged PDF or ZIP file if they exist
-        if 'merged_output_path' in locals() and os.path.exists(merged_output_path):
-            os.remove(merged_output_path)
-        if 'zip_path' in locals() and os.path.exists(zip_path):
-            os.remove(zip_path)
-
+        raise HTTPException(status_code=500, detail=f"Error during bulk conversion: {str(e)}")
+    
 # Existing '/merge_pdfs' endpoint for merging PDFs directly
 @app.post("/merge_pdfs")
 async def merge_pdfs_endpoint(files: List[UploadFile] = File(...)):

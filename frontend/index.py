@@ -1,89 +1,11 @@
-# import streamlit as st
-# import requests
-# import os
-# from PyPDF2 import PdfReader
 
-# # FastAPI endpoint URL
-# FASTAPI_URL = "http://localhost:8000/upload"  # Replace with your actual endpoint
-
-# def main():
-#     st.title("Word to PDF Converter")
-
-#     uploaded_file = st.file_uploader("Upload a Word (.docx) file", type="docx")
-
-#     if uploaded_file is not None:
-#         # Display metadata of the uploaded .docx file
-#         st.subheader("Uploaded File Metadata")
-#         st.write(f"**File Name:** {uploaded_file.name}")
-#         st.write(f"**File Size:** {uploaded_file.size} bytes")
-
-#     # Add a checkbox for password protection
-#     protect_with_password = st.checkbox("Protect with password")
-
-#     # Conditionally display the password input
-#     password = None
-#     if protect_with_password:
-#         password = st.text_input("Enter a password", type="password")
-
-#     convert_button = st.button("Convert")
-
-#     if convert_button and uploaded_file is not None:
-#         files = {
-#             'file': (
-#                 uploaded_file.name,
-#                 uploaded_file.getvalue(),
-#                 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
-#             )
-#         }
-#         data = {}
-#         if password:
-#             data['password'] = password
-
-#         with st.spinner('Converting...'):
-#             try:
-#                 response = requests.post(FASTAPI_URL, files=files, data=data)
-#                 if response.status_code == 200:
-#                     # Save the PDF file
-#                     output_pdf_path = uploaded_file.name.replace('.docx', '.pdf')
-#                     with open(output_pdf_path, 'wb') as f:
-#                         f.write(response.content)
-
-#                     st.success("Conversion successful!")
-
-#                     # Display metadata of the converted PDF file
-#                     st.subheader("Converted PDF Metadata")
-#                     reader = PdfReader(output_pdf_path)
-#                     num_pages = len(reader.pages)
-#                     st.write(f"**Number of Pages:** {num_pages}")
-
-#                     # Provide a download button
-#                     with open(output_pdf_path, 'rb') as f:
-#                         st.download_button(
-#                             label="Download PDF",
-#                             data=f,
-#                             file_name=output_pdf_path,
-#                             mime='application/pdf'
-#                         )
-
-#                     # Remove the saved PDF file after download
-#                     os.remove(output_pdf_path)
-#                 else:
-#                     st.error(f"Conversion failed: {response.text}")
-#             except Exception as e:
-#                 st.error(f"An error occurred: {str(e)}")
-#     elif convert_button and uploaded_file is None:
-#         st.warning("Please upload a Word (.docx) file.")
-
-# if __name__ == "__main__":
-#     main()
 import streamlit as st
 import requests
 import os
 from io import BytesIO
 from PyPDF2 import PdfReader, PdfWriter
 
-# Base URL for your FastAPI endpoints
-BASE_URL = "http://localhost:8000"  # Replace with your actual base URL if different
+BASE_URL = "http://backend:8000" 
 
 def main():
     st.title("Document Processing Application")
