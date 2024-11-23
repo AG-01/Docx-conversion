@@ -9,9 +9,6 @@ def protect_pdf(input_pdf: bytes, password: str) -> bytes:
     Args:
         input_pdf (bytes): The original PDF file in bytes.
         password (str): The password to protect the PDF with.
-    
-    Returns:
-        bytes: The password-protected PDF file in bytes.
     """
     try:
         pdf_reader = PdfReader(BytesIO(input_pdf))

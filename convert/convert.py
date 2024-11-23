@@ -19,7 +19,10 @@ def document_to_pdf(inputPath, outputPath):
         raise e
     
 def bulk_convert(input_files: list, output_folder: str):
-    """
+    """'
+    Converts multiple .docx files to .pdf files using Pandoc with a specific LaTeX engine.
+    
+    Args:
         input_files (List[Dict]): List of dictionaries containing the path to the input .docx files.
         output_folder (str): Path to the output folder where the converted .pdf files will be saved.
     """

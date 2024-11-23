@@ -9,6 +9,11 @@ app = FastAPI()
 async def merge_pdfs_endpoint(files: list[UploadFile] = File(...)):
     """
     Endpoint to merge multiple PDF files into a single PDF.
+        - Uses the merge_pdfs helper function
+            - Essential logic - uses the PyPDF2 library to merge multiple PDF files.
+            - Args:
+                - pdf_contents (List[bytes]): List of byte contents of the PDF files to merge.
+        - Returns the merged PDF file as a response.
     """
     if len(files) < 2:
         raise HTTPException(status_code=400, detail="Please upload at least two PDF files to merge.")

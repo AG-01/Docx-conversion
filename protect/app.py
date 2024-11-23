@@ -13,6 +13,14 @@ async def protect_pdf_endpoint(
 ):
     """
     Endpoint to password-protect a PDF file.
+    - Uses the protect_pdf helper function
+        - Essential logic - uses the PyPDF2 library to password-protect a PDF file.
+        - Args:
+            - input_file (bytes): Byte content of the input PDF file.
+            - password (str): Password to protect the PDF file.
+            
+    - Returns the password-protected PDF file as a response.
+    
     """
     if not file.filename.endswith('.pdf'):
         raise HTTPException(status_code=400, detail="Invalid file format. Please upload a PDF file.")

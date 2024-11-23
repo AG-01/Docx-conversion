@@ -9,8 +9,6 @@ def merge_pdfs(input_pdfs: list) -> bytes:
     Args:
         input_pdfs (list): List of PDF files in bytes.
     
-    Returns:
-        bytes: The merged PDF file in bytes.
     """
     pdf_writer = PdfWriter()
     

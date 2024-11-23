@@ -25,6 +25,13 @@ def main():
         st.write("Please select an option from the sidebar.")
 
 def convert_word_to_pdf():
+    """
+    Function to convert Word files to PDF.
+    - Uses the convert endpoint of the convert service.
+    - Provides options to convert a single Word file to PDF or multiple Word files to PDF.  
+    - Provides an option to merge the converted PDFs into a single PDF otherwise zip as output.
+    
+    """
     st.header("Word to PDF Converter")
 
     uploaded_files = st.file_uploader(
@@ -131,6 +138,13 @@ def convert_word_to_pdf():
         st.info("Please upload at least one Word (.docx, .doc) file.")
 
 def password_protect_pdf():
+    """
+    Password protect a PDF file.
+    - Uses the protect endpoint of the password service.
+    - Provides an option to upload a PDF file and enter a password to protect the PDF.
+    - Provides a download button to download the password-protected PDF.
+    
+    """
     st.header("Password Protect a PDF")
 
     uploaded_file = st.file_uploader("Upload a PDF file", type="pdf")
@@ -178,6 +192,13 @@ def password_protect_pdf():
         st.info("Please upload a PDF file.")
 
 def merge_pdfs():
+    
+    """
+    Function to merge PDF files.
+    - Uses the merge endpoint of the merge service.
+    - Provides an option to upload multiple PDF files to merge.
+    - Provides a download button to download the merged pdf file
+    """
     st.header("Merge PDFs")
 
     uploaded_files = st.file_uploader(
