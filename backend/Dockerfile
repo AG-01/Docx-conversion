@@ -15,9 +15,6 @@ RUN apt-get update && \
     lmodern \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
-# Install required packages for PDF conversion
-
-
 
 # Set the working directory
 WORKDIR /app

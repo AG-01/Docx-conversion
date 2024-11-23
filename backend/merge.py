@@ -11,17 +11,11 @@ def merge_pdfs(input_paths: List[str], output_path: str):
         output_path (str): The path to save the merged PDF file.
     """
     try:
-        merger = PdfMerger()
-        
-        # Add each PDF to the merger
+        merger = PdfMerger()        
         for pdf_path in input_paths:
-            merger.append(pdf_path)
-        
-        # Write the merged PDF to the output path
+            merger.append(pdf_path)        
         with open(output_path, 'wb') as output_file:
-            merger.write(output_file)
-            
-        # Close the merger to free up resources
+            merger.write(output_file)            
         merger.close()
             
     except Exception as e:
