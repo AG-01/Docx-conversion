@@ -7,17 +7,39 @@ services:
     ports:
       - '8501:8501'
     depends_on:
-      - backend
+      - convert
+      - password
+      - merge
     networks:
       - app-network
 
-  backend:
+  convert:
     build:
-      context: ./backend
+      context: ./convert
       dockerfile: Dockerfile
-    container_name: backend
+    container_name: convert
     ports:
       - '8000:8000'
+    networks:
+      - app-network
+
+  password:
+    build:
+      context: ./protect
+      dockerfile: Dockerfile
+    container_name: password
+    ports:
+      - '8001:8001'
+    networks:
+      - app-network
+
+  merge:
+    build:
+      context: ./merge
+      dockerfile: Dockerfile
+    container_name: merge
+    ports:
+      - '8002:8002'
     networks:
       - app-network
 

@@ -1,11 +1,12 @@
-
 import streamlit as st
 import requests
 import os
 from io import BytesIO
-from PyPDF2 import PdfReader, PdfWriter
 
-BASE_URL = "http://backend:8000" 
+# Base URLs for backend services
+convert_url = "http://convert:8000"
+password_url = "http://password:8001"
+merge_url = "http://merge:8002"
 
 def main():
     st.title("Document Processing Application")
@@ -15,7 +16,7 @@ def main():
     choice = st.sidebar.selectbox("Select an option", options)
 
     if choice == "Convert Word to PDF":
-        word_to_pdf()
+        convert_word_to_pdf()
     elif choice == "Password Protect a PDF":
         password_protect_pdf()
     elif choice == "Merge PDFs":
@@ -23,12 +24,12 @@ def main():
     else:
         st.write("Please select an option from the sidebar.")
 
-def word_to_pdf():
+def convert_word_to_pdf():
     st.header("Word to PDF Converter")
 
     uploaded_files = st.file_uploader(
-        "Upload Word (.docx) files",
-        type="docx",
+        "Upload Word (.docx, .doc) files",
+        type=["docx", "doc"],
         accept_multiple_files=True
     )
 
@@ -44,7 +45,6 @@ def word_to_pdf():
                 password = st.text_input("Enter a password", type="password")
 
             if st.button("Convert"):
-                # Send request to /upload endpoint
                 file = uploaded_files[0]
                 files = {
                     'file': (
@@ -59,7 +59,7 @@ def word_to_pdf():
 
                 with st.spinner('Converting...'):
                     try:
-                        response = requests.post(f"{BASE_URL}/upload", files=files, data=data)
+                        response = requests.post(f"{convert_url}/convert", files=files, data=data)
                         if response.status_code == 200:
                             st.success("Conversion successful!")
 
@@ -67,11 +67,11 @@ def word_to_pdf():
                             st.download_button(
                                 label="Download PDF",
                                 data=response.content,
-                                file_name=file.name.replace('.docx', '.pdf'),
+                                file_name=file.name.replace('.docx', '.pdf').replace('.doc', '.pdf'),
                                 mime='application/pdf'
                             )
                         else:
-                            st.error(f"Conversion failed: {response.text}")
+                            st.error(f"Conversion failed: {response.json().get('detail', 'Unknown error')}")
                     except Exception as e:
                         st.error(f"An error occurred: {str(e)}")
 
@@ -87,17 +87,13 @@ def word_to_pdf():
             merge_option = st.checkbox("Merge PDFs into a single PDF")
 
             if st.button("Convert"):
-                # Send request to /bulk_convert endpoint
                 files = []
                 for file in uploaded_files:
-                    files.append((
-                        'files',
-                        (
-                            file.name,
-                            file.getvalue(),
-                            'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
-                        )
-                    ))
+                    files.append(('files', (
+                        file.name,
+                        file.getvalue(),
+                        'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+                    )))
 
                 data = {}
                 if password:
@@ -107,7 +103,7 @@ def word_to_pdf():
 
                 with st.spinner('Converting...'):
                     try:
-                        response = requests.post(f"{BASE_URL}/bulk_convert", files=files, data=data)
+                        response = requests.post(f"{convert_url}/bulk_convert", files=files, data=data)
                         if response.status_code == 200:
                             st.success("Conversion successful!")
 
@@ -128,11 +124,11 @@ def word_to_pdf():
                                     mime='application/zip'
                                 )
                         else:
-                            st.error(f"Conversion failed: {response.text}")
+                            st.error(f"Conversion failed: {response.json().get('detail', 'Unknown error')}")
                     except Exception as e:
                         st.error(f"An error occurred: {str(e)}")
     else:
-        st.info("Please upload at least one Word (.docx) file.")
+        st.info("Please upload at least one Word (.docx, .doc) file.")
 
 def password_protect_pdf():
     st.header("Password Protect a PDF")
@@ -143,35 +139,41 @@ def password_protect_pdf():
         
         if password:
             if st.button("Protect PDF"):
-                try:
-                    # Read the uploaded PDF
-                    pdf_reader = PdfReader(uploaded_file)
-                    pdf_writer = PdfWriter()
-
-                    for page in pdf_reader.pages:
-                        pdf_writer.add_page(page)
-
-                    # Encrypt the PDF
-                    pdf_writer.encrypt(user_pwd=password)
-
-                    # Write the encrypted PDF to a BytesIO object
-                    output_pdf = BytesIO()
-                    pdf_writer.write(output_pdf)
-                    output_pdf.seek(0)
-
-                    st.success("PDF has been password protected!")
-
-                    # Provide a download button
-                    st.download_button(
-                        label="Download Protected PDF",
-                        data=output_pdf,
-                        file_name="protected_" + uploaded_file.name,
-                        mime='application/pdf'
+                files = {
+                    'file': (
+                        uploaded_file.name,
+                        uploaded_file.getvalue(),
+                        'application/pdf'
                     )
-                except Exception as e:
-                    st.error(f"An error occurred: {str(e)}")
+                }
+                data = {
+                    'password': password
+                }
+
+                with st.spinner('Protecting PDF...'):
+                    try:
+                        response = requests.post(f"{password_url}/protect", files=files, data=data)
+                        if response.status_code == 200:
+                            st.success("PDF has been password protected!")
+
+                            # Provide a download button
+                            st.download_button(
+                                label="Download Protected PDF",
+                                data=response.content,
+                                file_name="protected_" + uploaded_file.name,
+                                mime='application/pdf'
+                            )
+                        else:
+                            # Attempt to parse error message; fallback to unknown error
+                            try:
+                                error_detail = response.json().get('detail', 'Unknown error')
+                            except:
+                                error_detail = 'Unknown error'
+                            st.error(f"Password protection failed: {error_detail}")
+                    except Exception as e:
+                        st.error(f"An error occurred: {str(e)}")
         else:
-            st.info("Please enter a password.")
+            st.warning("Please enter a password to protect the PDF.")
     else:
         st.info("Please upload a PDF file.")
 
@@ -180,7 +182,7 @@ def merge_pdfs():
 
     uploaded_files = st.file_uploader(
         "Upload PDF files to merge",
-        type="pdf",
+        type=["pdf"],
         accept_multiple_files=True
     )
 
@@ -191,18 +193,15 @@ def merge_pdfs():
             if st.button("Merge PDFs"):
                 files = []
                 for file in uploaded_files:
-                    files.append((
-                        'files',
-                        (
-                            file.name,
-                            file.getvalue(),
-                            'application/pdf'
-                        )
-                    ))
+                    files.append(('files', (
+                        file.name,
+                        file.getvalue(),
+                        'application/pdf'
+                    )))
 
                 with st.spinner('Merging PDFs...'):
                     try:
-                        response = requests.post(f"{BASE_URL}/merge_pdfs", files=files)
+                        response = requests.post(f"{merge_url}/merge", files=files)
                         if response.status_code == 200:
                             st.success("PDFs merged successfully!")
 
@@ -214,7 +213,7 @@ def merge_pdfs():
                                 mime='application/pdf'
                             )
                         else:
-                            st.error(f"Merging failed: {response.text}")
+                            st.error(f"Merging failed: {response.json().get('detail', 'Unknown error')}")
                     except Exception as e:
                         st.error(f"An error occurred: {str(e)}")
     else:
